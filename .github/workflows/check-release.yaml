@@ -1,0 +1,57 @@
+name: Check Release Artifacts
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  check_artifacts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: release-assets # Adjust this name if your artifacts have a different name.
+          path: release_artifacts
+
+      - name: List Artifacts
+        run: ls -l release_artifacts
+
+      - name: Check Artifact Existence
+        run: |
+          if [ -f release_artifacts/my_binary ]; then
+            echo "my_binary artifact exists."
+          else
+            echo "my_binary artifact does not exist."
+            exit 1 # Fail the workflow if the artifact is missing.
+          fi
+
+      - name: Check Artifact Checksum (Optional)
+        run: |
+          if [ -f release_artifacts/my_binary.sha256 ]; then
+            echo "Checksum file found, verifying..."
+            sha256sum -c release_artifacts/my_binary.sha256
+          else
+            echo "Checksum file not found, skipping verification."
+          fi
+
+      - name: Check Artifact Size (Optional)
+        run: |
+          size=$(stat -c %s release_artifacts/my_binary)
+          if [ "$size" -gt 1000000 ]; then # Example: Check if size is greater than 1MB
+            echo "Artifact size is: $size bytes"
+          else
+            echo "Artifact size is too small"
+            exit 1
+          fi
+
+      - name: Check Artifact Type (Optional)
+        run: |
+          file release_artifacts/my_binary
+
+      - name: Custom Script Checks (Optional)
+        run: |
+          # Add your custom checks here.
+          # Example: Run a script to validate the artifact.
+          # ./validate_artifact.sh release_artifacts/my_binary
